@@ -1,7 +1,7 @@
 # eProduce
 CPSC 2261 Term Project
 
-Allows produce stores to order.
+Allows produce stores to order. \n
     - Node.js is the server. (app.js)
     - MongoDB is the database.(eProduce,[items, orders])
     - JSON objects are used for agent browser communication.
