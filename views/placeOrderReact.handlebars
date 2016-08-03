@@ -1,0 +1,228 @@
+
+
+<script type="text/babel">
+
+	var OrderBox = React.createClass({
+
+		componentDidMount : function(){
+                	$("#placeOrderLink").attr('class', 'active');
+                	$("#itemTable").attr('class', 'pure-table');
+                	$("#workAreaJumbotron").attr('class', 'jumbotron');
+                	$("#workAreaContainer").attr('class', 'container');
+                	$("#responsive").attr('class', 'table-responsive');
+
+                	$.ajax({
+				url: "/order", 
+				type: "GET",
+				contentType: 'application/json',
+				success: function(result) {
+					
+						//Load the newest order into the table
+						//displayOrder(result[result.length - 1]._id);
+
+						$.ajax({
+				url: "/order/" + (result[result.length - 1]._id), 
+				type: "GET",
+				contentType: 'application/json',
+				success: function(orderResult) {
+						//Get item list
+						//Needed to use name and price for order
+						$.ajax({
+							url: "/items", 
+							type: "GET",
+							contentType: 'application/json',
+							success: function(itemResult) {
+									//Make the table
+									var table = document.getElementById('itemTable');
+									var orderTotal = 0;
+									
+
+									// Add order the table
+									// Display quantity, plu, name and price
+									for(var i = 0 ; i < itemResult.length ; i++){
+
+										if((typeof orderResult[itemResult[i].plu] !== 'undefined')&&
+												(orderResult[itemResult[i].plu]["quantity"] > 0)){
+											document.getElementById('tableBody').insertRow(-1).innerHTML='<tr><td>'+ orderResult[itemResult[i].plu].quantity +
+					 																 '</td><td>' + itemResult[i].plu +
+					 																 '</td><td>' + itemResult[i].name + 
+					 																 '</td><td>' + orderResult[itemResult[i].plu]["price"] + '</td></tr>';
+					 					orderTotal += 	orderResult[itemResult[i].plu]["quantity"] *  orderResult[itemResult[i].plu]["price"];
+
+										}
+									
+									}
+
+									document.getElementById("quantity").innerHTML = "Total Pieces - " + orderResult.quantity;
+									document.getElementById("total").innerHTML = "Order Total - $" + orderTotal.toFixed(2);
+									document.getElementById("date").innerHTML = "Ordered - " + orderResult.date;
+
+									
+							}
+			
+						});
+						
+					}
+			});
+					}
+			})
+
+                },
+
+		 render: function() {
+                        return (
+                       		<div id="workAreaJumbotron">
+								<div id ="workAreaContainer">
+							        <h2>Order Placed</h2>
+
+							<div id="responsive">
+							        <table id="itemTable">
+										<thead>
+											<tr>
+												<th>Quantity</th>
+												<th>PLU</th>
+												<th>Name</th>
+												<th>Price</th>
+											</tr>
+										</thead>
+										<tbody id="tableBody">
+											
+										</tbody>
+									</table>
+							</div>
+
+								<div id="quantity"></div>
+								<div id="total"></div>
+								<div id="date"></div>
+								</div>
+							</div>
+						);
+                 }
+
+
+	});
+
+	var CommentBox = React.createClass({
+                componentDidMount : function(){
+                	$("#placeOrderLink").attr('class', 'active');
+                	$("#itemTable").attr('class', 'pure-table');
+                	$("#workAreaJumbotron").attr('class', 'jumbotron');
+                	$("#workAreaContainer").attr('class', 'container');
+                	$("#responsive").attr('class', 'table-responsive');
+
+                	$.ajax({
+						url: "/items", 
+						type: "GET",
+						contentType: 'application/json',
+						success: function(result) {
+							for(var i = 0 ; i < result.length; i++){
+					 			document.getElementById('tableBody').insertRow(-1).innerHTML='<tr><td><input type="text" value ="0" size="3" 							style="text-align:right;"></td>' +
+					 																 '<td>'+ result[i].plu +
+					 																 '</td><td>' + result[i].name +
+					 																 '</td><td>' + result[i].price + '</td></tr>';
+							}
+						}
+					});
+                },
+                render: function() {
+                        return (
+                       
+                                <div id="workAreaJumbotron">
+									<div id ="workAreaContainer">
+								        <h2>Place Orders</h2>
+								      	<div id="responsive">
+								      	<table id="itemTable">
+											<thead>
+												<tr>
+													<th>Quantity</th>
+													<th>PLU</th>
+													<th>Name</th>
+													<th>Price</th>
+												</tr>
+											</thead>
+											<tbody id="tableBody">
+												
+											</tbody>
+										</table><br />
+										<input type="button" onClick={this.placeOrder} value="Place Order" />
+										<div id="result"></div>
+									</div>
+									</div>
+								</div>
+                        );
+                },
+		
+		placeOrder: function(e){
+			var table = document.getElementById("itemTable");
+			var orderString = '{';
+			var order;
+			var orderQuantity = 0;
+
+			//Fill orderString with JSON items
+			//		 plu : quantity 
+			//Add to quantity
+			//Comma for next item
+			for(var i = 1 ; i < table.rows.length ; i++ ){
+		
+				if((table.rows[i].cells[0].children[0].value != "" ) &&
+					 (table.rows[i].cells[0].children[0].value != "0") &&
+					 (!isNaN(table.rows[i].cells[0].children[0].value))){
+						orderString += '"' + table.rows[i].cells[1].innerHTML + '" : {' + 
+												'"quantity":"' + table.rows[i].cells[0].children[0].value + '",' + 
+												'"price":"' + table.rows[i].cells[3].innerHTML + '"}';
+
+						orderQuantity += parseInt(table.rows[i].cells[0].children[0].value);
+						
+						orderString += ',';
+					
+				}
+			}
+			//BUG : Since the price is not saving, if the price is changed after an order is written, the order will display the new price, not the price it was ordered with.
+			
+			//Dont contact the server if the order has 0 items
+			if(orderQuantity == 0 ) {
+				$("#result").html("Please order minimum 1 item");
+			}
+			else{
+				//Complete the JSON object
+
+				//Add quantity
+				orderString += '"quantity":"' + orderQuantity + '",';
+
+				//Add date
+				var d = new Date();
+				orderString += '"date":"' + (d.getMonth()+1)  + "-" + d.getDate() + "-" + d.getFullYear() + '"';
+
+				//Close JSON object
+				orderString += '}';
+				
+				//Make the string a JSON object
+				order = jQuery.parseJSON(orderString);
+				
+				//Place the order
+				$.ajax({
+					url: "/order", 
+					type: "POST",
+					contentType: 'application/json',
+					data: JSON.stringify(order),
+					success: function(result) {
+										//Redirect the user to the cmpleted order
+										//window.location.href = '/viewOrder';
+										ReactDOM.render(<OrderBox />, document.getElementById('reactBody'));
+						
+									}
+				});
+			}
+			
+		}
+	});
+	 ReactDOM.render(
+                <CommentBox />,
+                document.getElementById('reactBody')
+        );
+
+
+
+		
+</script>		
+		

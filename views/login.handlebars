@@ -1,0 +1,27 @@
+<h2 class="page-header">Account Login</h2>
+<form method="post" action="/login">
+  <div class="form-group">
+    <label>Username</label>
+    <input type="text" class="form-control" name="username" placeholder="Username">
+  </div>
+  <div class="form-group">
+    <label>Password</label>
+    <input type="password" class="form-control" name="password" placeholder="Password">
+  </div>
+  <button type="submit" class="btn btn-default">Submit</button>
+</form>
+<script type="text/javascript">
+
+	//Hide navbar links
+	//	-Place Order, placeOrderLink
+	//	-View Orders, viewOrderLink
+	//	-View Items, viewItemLink
+	//	-logout, logoutLink
+	$("#placeOrderLink").attr("style", "display:none;");
+	$("#viewOrderLink").attr("style", "display:none;");
+	$("#viewItemLink").attr("style", "display:none;");
+	$("#logoutLink").attr("style", "display:none;");
+	//Show the register link
+	//	-Register, registerLink
+	$("#registerLink").attr("style", "display:block;");
+</script>

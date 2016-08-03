@@ -1,0 +1,19 @@
+body {
+  padding-top: 50px;
+}
+.starter-template {
+  padding: 40px 15px;
+  text-align: center;
+}
+
+/*
+.navbar-custom {
+    color: black;
+    background-color: #088A08;
+}
+
+.navbar-custom > .active{
+    color: red;
+    background-color: red;
+}
+**/

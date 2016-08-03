@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+	<!-- References a Handlebars partial in views/partials/head.handlebars -->			
+	{{>head}}
+  </head>
+
+  <body>
+	<!-- The HTML for each view goes here -->
+	<div id="container">
+		<!-- Navbar -->
+        	{{>navbar}}
+
+		<!-- Body -->
+		<div id="reactBody"></div>
+		{{{body}}} 
+	</div>
+
+
+
+	<!-- Bootstrap core JavaScript
+    	================================================== -->
+   	<!-- Placed at the end of the document so the pages load faster >
+    	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script-->
+    
+	<!-- JavaScript must be loaded for dropdown -->
+    	<script src="./dist/js/bootstrap.js"></script>
+    
+  </body>
+</html>
+

@@ -1,0 +1,123 @@
+<!--
+-	Place orders page
+-	Place an order using items
+-	Display id when order is added
+-
+-->
+
+<div class="jumbotron">
+	<div class="container">
+        <h2>Place Orders</h2>
+      	<div class="table-responsive">
+      	<table id="itemTable" class="pure-table">
+			<thead>
+				<tr>
+					<th>Quantity</th>
+					<th>PLU</th>
+					<th>Name</th>
+					<th>Price</th>
+				</tr>
+			</thead>
+			<tbody id="tableBody">
+				
+			</tbody>
+		</table><br />
+		<button id="placeOrder">Place Order</button>
+		<div id="result"></div>
+	</div>
+	</div>
+</div>
+
+<script type="text/javascript">
+		//Initial load
+		//	-set navbar
+		//	-load items into itemTable
+		$(document).ready(function(){
+			//Change the active state of the navbar
+			$("#placeOrderLink").attr('class', 'active');
+
+			//Get items for the table
+			// add input field, plu, name, and price
+			$.ajax({
+				url: "/items", 
+				type: "GET",
+				contentType: 'application/json',
+				success: function(result) {
+					for(var i = 0 ; i < result.length; i++){
+					 	document.getElementById('tableBody').insertRow(-1).innerHTML='<tr><td><input type="text" value ="0" size="3" style="text-align:right;"></td>' +
+					 																 '<td>'+ result[i].plu +
+					 																 '</td><td>' + result[i].name +
+					 																 '</td><td>' + result[i].price + '</td></tr>';
+					}
+				}
+			});
+		
+		});
+
+		//Place order click function
+		//	-place the completed order in the orders database
+		$("#placeOrder").click(function() {
+			var table = document.getElementById("itemTable");
+			var orderString = '{';
+			var order;
+			var orderQuantity = 0;
+
+			//Fill orderString with JSON items
+			//		 plu : quantity 
+			//Add to quantity
+			//Comma for next item
+			for(var i = 1 ; i < table.rows.length ; i++ ){
+				
+				//Ignore blank inputs and zero order quantity
+				if((table.rows[i].cells[0].children[0].value != "" ) &&
+					 (table.rows[i].cells[0].children[0].value != "0") &&
+					 (!isNaN(table.rows[i].cells[0].children[0].value))){
+						
+						orderString += '"' + table.rows[i].cells[1].innerHTML + '" : {' + 
+												'"quantity":"' + table.rows[i].cells[0].children[0].value + '",' + 
+												'"price":"' + table.rows[i].cells[3].innerHTML + '"}';
+
+						orderQuantity += parseInt(table.rows[i].cells[0].children[0].value);
+						
+						orderString += ',';
+					
+				}
+			}
+
+			
+			//Dont contact the server if the order has 0 items
+			if(orderQuantity == 0 ) {
+				$("#result").html("Please order minimum 1 item");
+			}
+			else{
+				//Complete the JSON object
+
+				//Add quantity
+				orderString += '"quantity":"' + orderQuantity + '",';
+
+				//Add date
+				var d = new Date();
+				orderString += '"date":"' + (d.getMonth()+1)  + "-" + d.getDate() + "-" + d.getFullYear() + '"';
+
+				//Close JSON object
+				orderString += '}';
+				
+				//Make the string a JSON object
+				order = jQuery.parseJSON(orderString);
+				
+				//Place the order
+				$.ajax({
+					url: "/order", 
+					type: "POST",
+					contentType: 'application/json',
+					data: JSON.stringify(order),
+					success: function(result) {
+										//Redirect the user to the cmpleted order
+										window.location.href = '/viewOrder';
+						
+									}
+				});
+			}
+		});
+
+</script>

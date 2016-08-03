@@ -1,0 +1,218 @@
+<!--
+-	View items page
+-	View current items in database
+-	add items to the database
+-	update item price given a plu
+-
+-->
+<style>
+	[class*="col-"]{
+		background-color:#eee;
+	}
+</style>
+
+
+<div class="row">
+	<div class="col-sm-6">
+		<h2>view items</h2>
+		<div class="table-responsive">
+		<table id="itemTable" class="pure-table">
+			<thead>
+				<tr>
+					<th>Select</th>
+					<th>PLU</th>
+					<th>Name</th>
+					<th>Price</th>
+				</tr>
+			</thead>
+			<tbody id="tableBody">
+				
+			</tbody>
+		</table>
+		<div id="result"></div>
+		</div>
+	</div>
+
+		
+		<div class="col-sm-6">
+			<h2>Add / Update Item</h2>
+			<form>
+				PLU<input type="text" name="firstName" id="plu"><br />
+				Name <input type="text" name="lastName" id="name"><br />
+				Price<input type="text" name="idNumber" id="price"><br />
+			</form>
+			<br />
+			<button id="add" class="btn btn-primary ">Add Item</button>
+			<button id="update" class="btn btn-primary ">Update Price</button>
+			<button id="delete" class="btn btn-primary ">Delete Selected</button>
+		</div>
+		
+</div>
+
+
+<script type="text/javascript">
+		//Initial load
+		//	-set navbar
+		//	-load items into itemTable
+		$(document).ready(function(){
+			//Change the active state of the navbar
+			$("#viewItemLink").attr('class', 'active');
+
+			//Get items for the table
+			$.ajax({
+				url: "/items", 
+				type: "GET",
+				contentType: 'application/json',
+				success: function(result) {
+
+					for(var i = 0 ; i < result.length; i++){
+					 	document.getElementById('tableBody').insertRow(-1).innerHTML='<tr><td><input type="checkbox"></td>' +
+					 																 '<td>'+ result[i].plu +
+					 																 '</td><td>' + result[i].name +
+					 																 '</td><td>' + result[i].price + '</td></tr>';
+					}
+				}
+			});
+		
+		});
+
+		//Add item click function
+		//	-place the completed item in the items database
+		$("#add").click(function() {
+			var pluNumber = document.getElementById('plu').value;
+			var itemName = document.getElementById('name').value;
+			var itemPrice = document.getElementById('price').value;
+
+			if((pluNumber == "")||
+				(pluNumber.length != 4)||
+				(isNaN(pluNumber))){
+				$("#result").html("Please enter a 4 digit number");
+				return;
+			}
+			if(itemName == ""){
+				$("#result").html("Please enter a name");
+				return;
+			}
+			if((itemPrice == "")||
+				(isNaN(itemPrice))){
+				$("#result").html("Please enter a price");
+				return;
+			}
+
+
+			$.ajax({
+                url: "/items" ,
+                type: "POST",
+                contentType: 'application/json',
+                data: JSON.stringify({plu : pluNumber,
+                   					name : itemName,
+                   					price : itemPrice}),
+
+                success: function(result) {
+
+                	if(result == "added"){
+	                	document.getElementById('tableBody').insertRow(-1).innerHTML='<tr><td><input type="checkbox"></td>' +
+						 																 '<td>'+ pluNumber +
+						 																 '</td><td>' + itemName +
+						 																 '</td><td>' + itemPrice + '</td></tr>';
+						document.getElementById('plu').value = "";
+	                	document.getElementById('name').value = "";
+						document.getElementById('price').value = "";
+						$("#result").html("Added");
+
+					}else{
+						$("#result").html("PLU already used");
+					}
+                }
+            });
+		});
+
+
+		//update item click function
+		//	-update the an item price given a plu the items database
+		$("#update").click(function() {
+			var pluNumber = document.getElementById('plu').value;
+			var itemPrice = document.getElementById('price').value;
+
+			if((pluNumber == "")||
+				(pluNumber.length != 4)||
+				(isNaN(pluNumber))){
+			
+				$("#result").html("Please enter a 4 digit number");
+				return;
+			}
+			
+			if((itemPrice == "")||
+				(isNaN(itemPrice))){
+		
+				$("#result").html("Please enter a price");
+				return;
+			}
+
+			$.ajax({
+                url: "/items/" + pluNumber,
+                type: "PUT",
+                contentType: 'application/json',
+                data: JSON.stringify({price : itemPrice}),
+
+                success: function(result) {
+
+                  	if(result == "updated"){
+                   		$("#result").html("PLU updated");
+
+                   		//clear the input boxes
+                   		document.getElementById('plu').value = "";
+               			document.getElementById('name').value = "";
+						document.getElementById('price').value = "";
+
+						//update the table
+						var table = document.getElementById("itemTable");
+
+						for (var i = 1 ; i < table.rows.length ; i++){
+							if(table.rows[i].cells[1].innerHTML == pluNumber){
+								table.rows[i].cells[3].innerHTML =  itemPrice;
+							}
+						}
+							
+					}else if (result == "up to date"){
+						$("#result").html("PLU up to date")
+
+                    }else{
+                    	$("#result").html("PLU not found");
+                    }
+                    	
+                        
+                }
+            });
+			return;
+			
+		});
+
+		//delete item click function
+		//	-delete selected item from the items database
+		$("#delete").click(function() {
+			var table = document.getElementById("itemTable");
+
+			for(var i = 1 ; i < table.rows.length ; i++ ){
+				//Only delete selected rows
+				if(table.rows[i].cells[0].children[0].checked){
+					
+					$.ajax({
+	                    url: "/items/" +  table.rows[i].cells[1].innerHTML,
+	                    type: "DELETE",
+	                    contentType: 'application/json',
+	                    data: JSON.stringify(),
+
+	                    success: function(result) {
+	                    
+	                    }
+	                });
+	                table.deleteRow(i);
+			
+					//Since the rows will shift up, reduce i by one
+					//This allows the row that was moved up to be checked if it needs to be deleted
+					i -= 1;
+				}
+			}
+		});
+</script>
